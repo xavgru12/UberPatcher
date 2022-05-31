@@ -1,5 +1,6 @@
 from io import BytesIO
 from urllib.request import urlopen
+from xmlrpc.client import Boolean
 from zipfile import ZipFile
 
 #steam installation finder
@@ -10,20 +11,31 @@ import winreg
 import os
 
 
-sys.tracebacklimit=0
+#sys.tracebacklimit=0
 
 #replace files
 import shutil
 
+#argparser with parseArguments function
+import argparse
 
-def downloadPatchfiles():
-    zipurl = 'http://uberforever.eu/patcher.zip'
+
+# TODO:
+# argparser -src und ohne optionen funktioniert
+# -ts funktioniert nicht, in downloadPatchfiles() muss patcher_dir flexibel sein fuer /testserverpatcher/patchfiles und patcher/patchfiles
+#FIXED, should be working now
+
+
+def downloadPatchfiles(zipurl):
+    #zipurl = 'http://uberforever.eu/patcher.zip'
     with urlopen(zipurl) as zipresp:
         with ZipFile(BytesIO(zipresp.read())) as zfile:
             test= zfile.extractall('/tmpuber')
             #for debug
             #print(test, zfile)
-    patcher_dir = '/tmpuber/patcher/patchfiles'
+    patchname= zipurl.split("/")[-1].replace(".zip","") #get patchname from zipurl, eg: 'http://uberforever.eu/patcher.zip' -> patcher
+    print("Patchname: ", patchname)
+    patcher_dir = '/tmpuber/'+patchname+'/patchfiles'
     return patcher_dir
 
 def getSteamPath():
@@ -93,25 +105,57 @@ def replaceFiles(root_src_dir, root_dst_dir):
             shutil.move(src_file, dst_dir) #will actually move files, so downloaded files will disappear
 
 def cleanupCreatedFiles(folder):
-    shutil.rmtree(folder)  #since files were moved, only need to delete folders
+    folderToDelete= os.path.dirname(os.path.dirname(folder))
+    shutil.rmtree(folderToDelete)  #since files were moved, only need to delete folders
+
+def parseArguments():
+    parser = argparse.ArgumentParser(description='Patching uber files.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--testserver','-ts', help=argparse.SUPPRESS, action='store_true') #store_true will be true, if -ts is written or not
+    group.add_argument('--source','-src', help=argparse.SUPPRESS) #arparse.suppress will not show this in help message
+    args = parser.parse_args()
+    if not args.testserver and not args.source:
+        return False
+
+    if args.testserver:
+        return True
+
+    if args.source:
+        return str(args.source)
 
 def main():
     print("Finding uber steam installation...")
     steam_path=getSteamPath()
     uber_path=getUberInstallationPath(steam_path)
-    #print(path)
+    
     if uber_path is None:
         raise FileExistsError("Could not find uber installation")
-    print("Downloading files...")
-    patcher_dir=downloadPatchfiles()
+    checkParser = parseArguments()
+ 
+    if type(checkParser) is Boolean:
+        print("Downloading files...")
+        if checkParser is False:
+            zipurl = 'http://uberforever.eu/patcher.zip'
+        elif checkParser is True:
+            #for debug
+            #print("testserver")
+            zipurl = 'http://uberforever.eu/testserverpatcher.zip'
+        patcher_dir=downloadPatchfiles(zipurl)
+    else:
+        patcher_dir=checkParser
+     
+
+
     print("Patching files...")
     #for debug
     #replaceFiles(r"C:\Users\Xaver\Documents\Uber\patcher_dir\patcher\patchfiles", r"C:\Program Files (x86)\Steam\steamapps\common\UberStrike")
     replaceFiles(patcher_dir, uber_path)
     #replaceFiles("C:\Users\Xaver\Documents\Uber\patcher_dir\patcher", "/tmpuberresult/")
     print("Cleaning up...")
-    cleanupCreatedFiles(patcher_dir)
+    if type(checkParser) is Boolean:
+        cleanupCreatedFiles(patcher_dir)
     print("DONE. Patcher has been installed. You can run the game without patcher from now on.")
+    input()
 
 
 if __name__ == "__main__":
