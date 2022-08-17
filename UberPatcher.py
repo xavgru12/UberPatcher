@@ -102,7 +102,7 @@ def replaceFiles(root_src_dir, root_dst_dir):
                 if os.path.samefile(src_file, dst_file):
                     continue
                 os.remove(dst_file)
-            shutil.move(src_file, dst_dir) #will actually move files, so downloaded files will disappear
+            shutil.copy(src_file, dst_dir) #will actually move files, so downloaded files will disappear
 
 def cleanupCreatedFiles(folder):
     folderToDelete= os.path.dirname(os.path.dirname(folder))
@@ -150,6 +150,7 @@ def main():
     #for debug
     #replaceFiles(r"C:\Users\Xaver\Documents\Uber\patcher_dir\patcher\patchfiles", r"C:\Program Files (x86)\Steam\steamapps\common\UberStrike")
     replaceFiles(patcher_dir, uber_path)
+    #print(patcher_dir)
     #replaceFiles("C:\Users\Xaver\Documents\Uber\patcher_dir\patcher", "/tmpuberresult/")
     print("Cleaning up...")
     if type(checkParser) is Boolean:
@@ -160,3 +161,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #replaceFiles(r"C:\Users\Xaver\Documents\Uber\patcher_dir\patcher_v2\patchfiles", r"C:\Program Files (x86)\Steam\steamapps\common\UberStrike")
