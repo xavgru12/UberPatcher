@@ -142,7 +142,7 @@ def main():
             zipurl = 'http://uberforever.eu/testserverpatcher.zip'
         patcher_dir=downloadPatchfiles(zipurl)
     else:
-        patcher_dir=checkParser
+        patcher_dir=checkParser  # <path>\patcher_dir\patcher/patcher/patchfiles, subdir of patchfiles is UberStrike_Data
      
 
 
