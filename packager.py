@@ -87,7 +87,7 @@ def createZip(path):
     folder_path = path
     shutil.make_archive(zip_file_name_with_path, 'zip', folder_path)
 
-if __name__ == "__main__":
+def functionalProgramming():
     generateExe(True, True)
     tempFolderForZipPatcher, tempFolderForZipInstaller = copyFilesForZip(True, True)
     if tempFolderForZipPatcher != "":
@@ -96,7 +96,56 @@ if __name__ == "__main__":
 
     if tempFolderForZipInstaller != "":
         createZip(tempFolderForZipInstaller) 
-        shutil.rmtree(tempFolderForZipInstaller)   
+        shutil.rmtree(tempFolderForZipInstaller) 
 
 
 
+  
+
+class Packager:
+    def __init__(self, name, package_path, exe_path):
+        self.name = name
+        self.package_path = package_path
+        self.exe_path = exe_path
+
+    def generateExe(self):
+        filepath= "../"+self.name+".py"
+
+        try:
+            output = subprocess.check_output([r"C:\Users\Xaver\AppData\Local\Programs\Python\Python310\python.exe", r"-m", r"nuitka", r"--mingw64", filepath ], cwd=self.exe_path, text=True)
+            print(output)
+
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with return code {e.returncode}")
+
+    def createTempDirectory(self):
+        self.deleteTempDirectory()
+        os.mkdir(self.name)
+    
+    def deleteTempDirectory(self):
+        shutil.rmtree("./"+self.name)
+
+    def copyFiles(self):
+        UberPatcher.replaceFiles(self.package_path, "./"+self.name)
+
+        exe_filepath=self.exe_path+"/"+self.name+".exe"
+        shutil.copy(exe_filepath, "./"+self.name)
+
+    def packageAsZip(self):
+        self.createTempDirectory()
+        self.copyFiles()
+        shutil.make_archive("./"+self.name, 'zip', "./"+self.name)
+        self.deleteTempDirectory()
+
+
+class PatcherPackager(Packager):
+    pass
+
+class InstallerPackager(Packager):
+    pass
+
+
+if __name__ == "__main__":
+    patcher = PatcherPackager("UberPatcher", "./Patcher/packageInfo", "./Patcher/exe")
+    patcher.generateExe()
+    patcher.packageAsZip()
