@@ -31,10 +31,7 @@ class Packager:
         shutil.rmtree("./"+self.name)
 
     def copyFiles(self):
-        UberPatcher.replaceFiles(self.package_path, "./"+self.name)
-
-        exe_filepath=self.exe_path+"/"+self.name+".exe"
-        shutil.copy(exe_filepath, "./"+self.name)
+        raise NotImplementedError()
 
     def packageAsZip(self):
         self.createTempDirectory()
@@ -43,7 +40,6 @@ class Packager:
         self.deleteTempDirectory()
 
 def packageHandler():
-    #get it from user input which to build
     patcher=True
     installer=True
     packager_list =[]
@@ -61,7 +57,11 @@ def packageHandler():
 
 
 class PatcherPackager(Packager):
-    pass
+    def copyFiles(self):
+        UberPatcher.replaceFiles(self.package_path, "./"+self.name)
+
+        exe_filepath=self.exe_path+"/"+self.name+".exe"
+        shutil.copy(exe_filepath, "./"+self.name)
 
 class InstallerPackager(Packager):
     def copyFilesFromUberstrikeInstallation(self):
@@ -79,7 +79,6 @@ class InstallerPackager(Packager):
 
 
     def copyFiles(self):
-        print("from derived class")
         UberPatcher.replaceFiles(self.package_path, "./"+self.name)
 
         exe_filepath=self.exe_path+"/"+self.name+".exe"
@@ -92,6 +91,3 @@ class InstallerPackager(Packager):
 
 if __name__ == "__main__":
     packageHandler()
-    #patcher = PatcherPackager("UberPatcher", "./Patcher/packageInfo", "./Patcher/exe")
-    #patcher.generateExe()
-    #patcher.packageAsZip()
