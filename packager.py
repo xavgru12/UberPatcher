@@ -88,7 +88,7 @@ class PatcherPackager(Packager):
         UberPatcher.replaceFiles(self.package_path, "./"+self.name)
 
         exe_filepath=self.exe_path+"/"+self.name+".exe"
-        shutil.copy(exe_filepath, "./"+self.name)
+        shutil.copytree(exe_filepath, "./"+self.name)
 
 class InstallerPackager(Packager):
     def copyFilesFromUberstrikeInstallation(self):
