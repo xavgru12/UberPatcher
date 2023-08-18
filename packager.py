@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shutil
+import argparse
 import sys
 sys.path.append(os.path.join(os.getcwd(),"./Patcher"))
 import UberPatcher
@@ -13,13 +14,15 @@ class Packager:
 
     def generateExe(self):
         filepath= "../"+self.name+".py"
+        print("Start generating exe for " + self.name)
 
         try:
-            output = subprocess.check_output([r"C:\Users\Xaver\AppData\Local\Programs\Python\Python310\python.exe", r"-m", r"nuitka", r"--mingw64", filepath ], cwd=self.exe_path, text=True)
-            print(output)
+            output = subprocess.run(["python", r"-m", r"nuitka", r"--mingw64", filepath ], cwd=self.exe_path)
+            #print(output)
 
         except subprocess.CalledProcessError as e:
             print(f"Command failed with return code {e.returncode}")
+        print("Done generating exe for " + self.name)
 
     def createTempDirectory(self):
         if os.path.exists("./"+self.name):
@@ -34,14 +37,16 @@ class Packager:
         raise NotImplementedError()
 
     def packageAsZip(self):
+        print("Start packaging for " + self.name)
         self.createTempDirectory()
         self.copyFiles()
         shutil.make_archive("./"+self.name, 'zip', "./"+self.name)
         self.deleteTempDirectory()
+        print("Done packaging for " + self.name)
 
 def packageHandler():
-    patcher=True
-    installer=True
+
+    patcher, installer = parseArguments()
     packager_list =[]
     if patcher:
         patcher_instance=PatcherPackager("UberPatcher", "./Patcher/packageInfo", "./Patcher/exe")
@@ -51,9 +56,31 @@ def packageHandler():
         installer_instance=InstallerPackager("UberInstaller", "./Patcher/packageInfo", "./Installer/exe")
         packager_list.append(installer_instance)
 
+    if not packager_list:
+        print("specify which patcher to package: --all/-a, --patcher/-p or --installer/-i")
+        input()
+        return
+
     for packager in packager_list:
         packager.generateExe()
         packager.packageAsZip()
+
+    print("Done completely!")
+    input()
+    return
+
+def parseArguments():
+    parser = argparse.ArgumentParser(description='UberPatcher packager.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--installer','-i', help=argparse.SUPPRESS, action='store_true') 
+    group.add_argument('--patcher','-p', help=argparse.SUPPRESS, action='store_true')
+    group.add_argument('--all','-a', help=argparse.SUPPRESS, action='store_true')
+    args = parser.parse_args()
+
+    if args.all is True:
+        return True, True
+        
+    return args.patcher, args.installer, 
 
 
 class PatcherPackager(Packager):
@@ -70,7 +97,7 @@ class InstallerPackager(Packager):
 
     def executeUberPatcher(self):
         try:
-            output = subprocess.check_output([r"C:\Users\Xaver\AppData\Local\Programs\Python\Python310\python.exe", "./Patcher/UberPatcher.py" ], text=True)
+            output = subprocess.call(["python", "./Patcher/UberPatcher.py" ])
             print(output)
 
         except subprocess.CalledProcessError as e:
@@ -85,9 +112,6 @@ class InstallerPackager(Packager):
         shutil.copy(exe_filepath, "./"+self.name)
 
         self.copyFilesFromUberstrikeInstallation()
-
-
-
 
 if __name__ == "__main__":
     packageHandler()
